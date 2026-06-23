@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Card, Table, PropertyFilter, type Column } from '../../shared/components';
+import { Card, PropertyFilter } from '../../shared/components';
 import { formatCurrency } from '../../shared/utils/formatting';
 import { usePropertyFilter } from '../../shared/hooks';
 import { fetchReport } from './api';
@@ -8,12 +8,6 @@ import type {
   ReportType,
   ReportFormat,
   ReportResponse,
-  TaxOverviewRow,
-  DeductibleCostRow,
-  AfaPlanReportEntry,
-  LoanOverviewRow,
-  RentStatusRow,
-  DocumentCompletenessRow,
 } from './types';
 import { REPORT_TYPE_LABELS, FORMAT_LABELS } from './types';
 
@@ -223,7 +217,7 @@ export function ReportsPage() {
 }
 
 /** Dynamic table preview based on report type */
-function ReportPreview({ type, data }: { type: ReportType; data: unknown }) {
+function ReportPreview({ data }: { type: ReportType; data: unknown }) {
   if (!data) {
     return (
       <p className="text-sm text-gray-500 italic">
@@ -356,94 +350,4 @@ function ObjectPreview({ data }: { data: Record<string, unknown> }) {
       })}
     </div>
   );
-}
-
-function TaxOverviewTable({ data }: { data: TaxOverviewRow[] }) {
-  const columns: Column<TaxOverviewRow>[] = [
-    { key: 'category', header: 'Kategorie', render: (r) => r.category },
-    { key: 'amount', header: 'Betrag', className: 'text-right', render: (r) => `${formatCurrency(r.amount)} €` },
-    { key: 'deductible', header: 'Abzugsfähig', render: (r) => r.is_tax_deductible ? 'Ja' : 'Nein' },
-    { key: 'note', header: 'Hinweis', render: (r) => r.note || '—' },
-  ];
-  return <Table columns={columns} data={data} keyExtractor={(r) => r.category} />;
-}
-
-function DeductibleCostTable({ data }: { data: DeductibleCostRow[] }) {
-  const columns: Column<DeductibleCostRow>[] = [
-    { key: 'category', header: 'Kategorie', render: (r) => r.category },
-    { key: 'amount', header: 'Betrag', className: 'text-right', render: (r) => `${formatCurrency(r.amount)} €` },
-    { key: 'allocable', header: 'Umlagefähig', render: (r) => r.is_allocable ? 'Ja' : 'Nein' },
-    { key: 'capitalization', header: 'Aktivierungspfl.', render: (r) => r.requires_capitalization ? 'Ja' : 'Nein' },
-  ];
-  return <Table columns={columns} data={data} keyExtractor={(r) => r.category} />;
-}
-
-function AfaPlanTable({ data }: { data: AfaPlanReportEntry[] }) {
-  const columns: Column<AfaPlanReportEntry>[] = [
-    { key: 'year', header: 'Jahr', render: (r) => String(r.year) },
-    { key: 'annual', header: 'Jahresbetrag', className: 'text-right', render: (r) => `${formatCurrency(r.annual_amount)} €` },
-    { key: 'cumulative', header: 'Kumuliert', className: 'text-right', render: (r) => `${formatCurrency(r.cumulative_amount)} €` },
-    { key: 'residual', header: 'Restwert', className: 'text-right', render: (r) => `${formatCurrency(r.residual_value)} €` },
-  ];
-  return <Table columns={columns} data={data} keyExtractor={(r) => String(r.year)} />;
-}
-
-function LoanOverviewTable({ data }: { data: LoanOverviewRow[] }) {
-  const columns: Column<LoanOverviewRow>[] = [
-    { key: 'lender', header: 'Darlehensgeber', render: (r) => r.lender },
-    { key: 'date', header: 'Datum', render: (r) => r.payment_date },
-    { key: 'interest', header: 'Zinsen', className: 'text-right', render: (r) => `${formatCurrency(r.interest_amount)} €` },
-    { key: 'repayment', header: 'Tilgung', className: 'text-right', render: (r) => `${formatCurrency(r.repayment_amount)} €` },
-    { key: 'total', header: 'Gesamt', className: 'text-right', render: (r) => `${formatCurrency(r.total)} €` },
-  ];
-  return <Table columns={columns} data={data} keyExtractor={(r) => `${r.loan_id}-${r.payment_date}`} />;
-}
-
-function RentStatusTable({ data }: { data: RentStatusRow[] }) {
-  const statusLabels: Record<string, string> = {
-    offen: 'Offen',
-    bezahlt: 'Bezahlt',
-    teilbezahlt: 'Teilbezahlt',
-    'überfällig': 'Überfällig',
-  };
-
-  const statusColors: Record<string, string> = {
-    offen: 'text-gray-600',
-    bezahlt: 'text-green-600',
-    teilbezahlt: 'text-yellow-600',
-    'überfällig': 'text-red-600',
-  };
-
-  const columns: Column<RentStatusRow>[] = [
-    { key: 'month', header: 'Monat', render: (r) => r.month },
-    { key: 'tenant', header: 'Mieter', render: (r) => r.tenant_name },
-    { key: 'expected', header: 'Soll', className: 'text-right', render: (r) => `${formatCurrency(r.expected_amount)} €` },
-    { key: 'paid', header: 'Ist', className: 'text-right', render: (r) => `${formatCurrency(r.paid_amount)} €` },
-    {
-      key: 'status',
-      header: 'Status',
-      render: (r) => (
-        <span className={`font-medium ${statusColors[r.status] || ''}`}>
-          {statusLabels[r.status] || r.status}
-        </span>
-      ),
-    },
-  ];
-  return <Table columns={columns} data={data} keyExtractor={(r) => `${r.month}-${r.tenant_name}`} />;
-}
-
-function DocumentCompletenessTable({ data }: { data: DocumentCompletenessRow[] }) {
-  const columns: Column<DocumentCompletenessRow>[] = [
-    { key: 'date', header: 'Datum', render: (r) => r.booking_date },
-    { key: 'description', header: 'Beschreibung', render: (r) => r.description || '—' },
-    { key: 'amount', header: 'Betrag', className: 'text-right', render: (r) => `${formatCurrency(r.amount)} €` },
-    {
-      key: 'document',
-      header: 'Beleg',
-      render: (r) => r.has_document
-        ? <span className="text-green-600 font-medium">Vorhanden</span>
-        : <span className="text-red-600 font-medium">Fehlt</span>,
-    },
-  ];
-  return <Table columns={columns} data={data} keyExtractor={(r) => r.booking_id} />;
 }
