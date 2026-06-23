@@ -1,0 +1,39 @@
+{
+  "name": "vermieter-kapitalanlagen-manager-backend",
+  "version": "1.0.0",
+  "description": "Backend für den Vermieter Kapitalanlagen Manager",
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch src/server.ts",
+    "build": "tsc",
+    "start": "node dist/server.js",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "dependencies": {
+    "@fastify/cors": "^11.0.1",
+    "@fastify/jwt": "^9.0.3",
+    "@fastify/multipart": "^10.0.0",
+    "bcrypt": "^5.1.1",
+    "bcryptjs": "^3.0.3",
+    "better-sqlite3": "^11.9.1",
+    "exceljs": "^4.4.0",
+    "fastify": "^5.3.3",
+    "fastify-plugin": "^5.0.1",
+    "pdfkit": "^0.19.1",
+    "uuid": "^11.1.0",
+    "zod": "^3.25.36"
+  },
+  "devDependencies": {
+    "@types/bcrypt": "^5.0.2",
+    "@types/bcryptjs": "^2.4.6",
+    "@types/better-sqlite3": "^7.6.12",
+    "@types/node": "^22.15.21",
+    "@types/pdfkit": "^0.17.6",
+    "@types/uuid": "^10.0.0",
+    "fast-check": "^4.1.1",
+    "tsx": "^4.19.4",
+    "typescript": "^5.8.3",
+    "vitest": "^3.1.4"
+  }
+}

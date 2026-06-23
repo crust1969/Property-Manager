@@ -1,0 +1,71 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  @apply bg-gray-50 text-gray-900 antialiased;
+}
+
+/* Print styles for simulation PDF export */
+@media print {
+  /* Hide navigation sidebar and non-essential UI */
+  aside,
+  nav,
+  .print\:hidden {
+    display: none !important;
+  }
+
+  /* Show print-only elements */
+  .hidden.print\:block {
+    display: block !important;
+  }
+
+  /* Full width for main content */
+  main {
+    margin: 0 !important;
+    padding: 0.5rem !important;
+    width: 100% !important;
+    overflow: visible !important;
+  }
+
+  /* Make flex layout single column for print */
+  .flex.h-screen {
+    display: block !important;
+  }
+
+  /* Remove shadows and borders for cleaner print */
+  .shadow-sm {
+    box-shadow: none !important;
+  }
+
+  /* Allow tables to wrap across pages and show all content */
+  .overflow-x-auto,
+  .overflow-auto,
+  .max-h-96,
+  .max-h-64 {
+    overflow: visible !important;
+    max-height: none !important;
+  }
+
+  /* Ensure scrollable containers show all content */
+  .overflow-y-auto {
+    overflow: visible !important;
+  }
+
+  /* Set reasonable font size for printing */
+  body {
+    font-size: 9pt !important;
+    background: white !important;
+  }
+
+  /* Remove fixed positioning */
+  .fixed {
+    display: none !important;
+  }
+
+  /* Page margins */
+  @page {
+    margin: 1.5cm;
+    size: A4 landscape;
+  }
+}
