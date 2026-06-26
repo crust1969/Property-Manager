@@ -125,8 +125,10 @@ export class AuthService {
   }
 
   private generateTokens(payload: { userId: string; email: string }): AuthTokens {
-    const accessToken = this.app.jwt.sign(payload, { expiresIn: ACCESS_TOKEN_EXPIRY });
-    const refreshToken = this.app.jwt.sign(
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const sign = this.app.jwt.sign as (payload: any, options?: any) => string;
+    const accessToken = sign(payload, { expiresIn: ACCESS_TOKEN_EXPIRY });
+    const refreshToken = sign(
       { ...payload, type: 'refresh' },
       { expiresIn: REFRESH_TOKEN_EXPIRY }
     );
