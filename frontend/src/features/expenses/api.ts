@@ -17,7 +17,50 @@ export async function fetchExpenses(filters: ExpenseFilters = {}): Promise<Expen
 
 /** Fetch a single expense by ID */
 export async function fetchExpense(id: string): Promise<Expense> {
-  return api.get<Expense>(`/expenses/${id}`);
+  const raw = await api.get<{
+    id: string;
+    property_id: string;
+    user_id: string;
+    type: string;
+    booking_date: string;
+    total_amount: number;
+    counterparty: string | null;
+    description: string | null;
+    category_name: string | null;
+    document_count: number;
+    splits: Array<{
+      category_id: string;
+      is_allocable: boolean;
+      is_tax_deductible: boolean;
+      requires_capitalization: boolean;
+      is_financing_related: boolean;
+    }>;
+    created_at: string;
+    updated_at: string;
+  }>(`/expenses/${id}`);
+
+  const firstSplit = raw.splits?.[0];
+
+  return {
+    id: raw.id,
+    property_id: raw.property_id,
+    user_id: raw.user_id,
+    type: 'expense',
+    booking_date: raw.booking_date,
+    total_amount: raw.total_amount,
+    counterparty: raw.counterparty || '',
+    description: raw.description || '',
+    category_id: firstSplit?.category_id || '',
+    category_name: raw.category_name || undefined,
+    is_allocable: firstSplit?.is_allocable ?? false,
+    is_tax_deductible: firstSplit?.is_tax_deductible ?? false,
+    requires_capitalization: firstSplit?.requires_capitalization ?? false,
+    is_financing_related: firstSplit?.is_financing_related ?? false,
+    has_splits: (raw.splits?.length ?? 0) > 1,
+    document_count: raw.document_count ?? 0,
+    created_at: raw.created_at,
+    updated_at: raw.updated_at,
+  };
 }
 
 /** Create a new expense */
