@@ -69,13 +69,13 @@ export function ExpenseForm({ mode }: ExpenseFormProps) {
     try {
       const expense = await fetchExpense(expenseId);
       setFormData({
-        booking_date: expense.booking_date,
+        booking_date: expense.booking_date || '',
         total_amount: formatCurrency(expense.total_amount),
-        counterparty: expense.counterparty,
-        category_id: expense.category_id,
-        description: expense.description,
-        property_id: expense.property_id,
-        use_split: expense.has_splits,
+        counterparty: expense.counterparty || '',
+        category_id: expense.category_id || '',
+        description: expense.description || '',
+        property_id: expense.property_id || '',
+        use_split: expense.has_splits ?? false,
       });
     } catch (err) {
       setSubmitError(err instanceof Error ? err.message : 'Fehler beim Laden');
