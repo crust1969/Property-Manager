@@ -57,5 +57,27 @@ export async function fetchComparison(params: {
   if (params.leaseId) queryParams.leaseId = params.leaseId;
   if (params.year) queryParams.year = params.year;
   if (params.month) queryParams.month = params.month;
-  return api.get<ComparisonEntry[]>('/income/comparison', queryParams);
+
+  const response = await api.get<{
+    soll: number;
+    ist: number;
+    differenz: number;
+    receivables: Array<{
+      id: string;
+      due_date: string;
+      total_amount: number;
+      paid_amount: number;
+      status: string;
+    }>;
+  }>('/income/comparison', queryParams);
+
+  // Map backend response to ComparisonEntry[]
+  return response.receivables.map((r) => ({
+    receivable_id: r.id,
+    due_date: r.due_date,
+    soll_amount: r.total_amount,
+    ist_amount: r.paid_amount,
+    differenz: r.total_amount - r.paid_amount,
+    status: r.status as ComparisonEntry['status'],
+  }));
 }
