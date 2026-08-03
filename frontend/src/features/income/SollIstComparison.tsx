@@ -149,6 +149,7 @@ export function SollIstComparison({ leaseId: propLeaseId, year, month }: SollIst
       )}
 
       {entries.length > 0 && (
+        <>
         <div className="overflow-x-auto">
         <table className="min-w-full divide-y divide-gray-200 text-sm">
           <thead className="bg-gray-50">
@@ -194,6 +195,7 @@ export function SollIstComparison({ leaseId: propLeaseId, year, month }: SollIst
         <span>{getStatusBadge('überfällig')} Zahlung überfällig</span>
         <span>{getStatusBadge('offen')} Noch offen</span>
       </div>
+      </>
       )}
     </Card>
   );
