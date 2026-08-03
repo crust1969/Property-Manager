@@ -2,7 +2,17 @@ import { useState, useEffect } from 'react';
 import { Card } from '../../shared/components';
 import { formatCurrency, formatDate } from '../../shared/utils/formatting';
 import { fetchComparison } from './api';
+import { api } from '../../shared/api/client';
 import type { ComparisonEntry, ReceivableStatus } from './types';
+
+interface Lease {
+  id: string;
+  tenant_id: string;
+  property_id: string;
+  start_date: string;
+  cold_rent: number;
+  status: string;
+}
 
 interface SollIstComparisonProps {
   leaseId?: string;
@@ -33,26 +43,57 @@ function getDifferenzStyle(differenz: number): string {
   return 'text-blue-700';
 }
 
-export function SollIstComparison({ leaseId, year, month }: SollIstComparisonProps) {
+export function SollIstComparison({ leaseId: propLeaseId, year, month }: SollIstComparisonProps) {
+  const [leases, setLeases] = useState<Lease[]>([]);
+  const [selectedLeaseId, setSelectedLeaseId] = useState(propLeaseId || '');
   const [entries, setEntries] = useState<ComparisonEntry[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    loadComparison();
-  }, [leaseId, year, month]);
+    loadLeases();
+  }, []);
+
+  useEffect(() => {
+    if (selectedLeaseId && year && month) {
+      loadComparison();
+    } else {
+      setEntries([]);
+    }
+  }, [selectedLeaseId, year, month]);
+
+  async function loadLeases() {
+    try {
+      const data = await api.get<Lease[]>('/leases');
+      setLeases(data.filter((l) => l.status === 'aktiv'));
+      if (data.length === 1) {
+        setSelectedLeaseId(data[0].id);
+      }
+    } catch { /* non-critical */ }
+  }
 
   async function loadComparison() {
+    if (!selectedLeaseId || !year || !month) return;
     setLoading(true);
     setError(null);
     try {
-      const data = await fetchComparison({ leaseId, year, month });
+      const data = await fetchComparison({ leaseId: selectedLeaseId, year, month });
       setEntries(data);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Fehler beim Laden des Soll/Ist-Vergleichs');
     } finally {
       setLoading(false);
     }
+  }
+
+  if (!year || !month) {
+    return (
+      <Card title="Soll/Ist-Vergleich">
+        <p className="text-center text-gray-500 py-4 text-sm">
+          Bitte Jahr und Monat wählen, um den Soll/Ist-Vergleich anzuzeigen.
+        </p>
+      </Card>
+    );
   }
 
   if (loading) {
@@ -67,21 +108,48 @@ export function SollIstComparison({ leaseId, year, month }: SollIstComparisonPro
     );
   }
 
-  if (entries.length === 0) {
-    return (
-      <p className="text-center text-gray-500 py-4 text-sm">
-        Keine Sollstellungen vorhanden
-      </p>
-    );
-  }
-
   const totalSoll = entries.reduce((sum, e) => sum + e.soll_amount, 0);
   const totalIst = entries.reduce((sum, e) => sum + e.ist_amount, 0);
   const totalDifferenz = totalSoll - totalIst;
 
   return (
     <Card title="Soll/Ist-Vergleich">
-      <div className="overflow-x-auto">
+      {/* Lease selector */}
+      {!propLeaseId && (
+        <div className="mb-4">
+          <label htmlFor="soll-ist-lease" className="block text-xs font-medium text-gray-500 mb-1">
+            Mietvertrag
+          </label>
+          <select
+            id="soll-ist-lease"
+            value={selectedLeaseId}
+            onChange={(e) => setSelectedLeaseId(e.target.value)}
+            className="block w-full max-w-xs rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+          >
+            <option value="">— Mietvertrag wählen —</option>
+            {leases.map((l) => (
+              <option key={l.id} value={l.id}>
+                ab {l.start_date} — {formatCurrency(l.cold_rent)} € Kaltmiete
+              </option>
+            ))}
+          </select>
+        </div>
+      )}
+
+      {!selectedLeaseId && (
+        <p className="text-center text-gray-500 py-4 text-sm">
+          Bitte wählen Sie einen Mietvertrag aus.
+        </p>
+      )}
+
+      {selectedLeaseId && entries.length === 0 && !loading && (
+        <p className="text-center text-gray-500 py-4 text-sm">
+          Keine Sollstellungen für diesen Zeitraum vorhanden
+        </p>
+      )}
+
+      {entries.length > 0 && (
+        <div className="overflow-x-auto">
         <table className="min-w-full divide-y divide-gray-200 text-sm">
           <thead className="bg-gray-50">
             <tr>
@@ -126,6 +194,7 @@ export function SollIstComparison({ leaseId, year, month }: SollIstComparisonPro
         <span>{getStatusBadge('überfällig')} Zahlung überfällig</span>
         <span>{getStatusBadge('offen')} Noch offen</span>
       </div>
+      )}
     </Card>
   );
 }
