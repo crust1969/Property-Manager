@@ -94,9 +94,10 @@ export class DashboardService {
   }
 
   /**
-   * Mieteingänge: count and sum of open vs paid receivables for current year.
-   * Only receivables with due_date <= today are counted as "offen" —
-   * future receivables (not yet due) are excluded from the open count.
+   * Mieteingänge: shows actually paid amounts vs outstanding amounts.
+   * - "bezahlt": sum of paid_amount across all receivables due up to today
+   * - "offen": sum of (total_amount - paid_amount) for receivables that are not fully paid and due <= today
+   * Future receivables (not yet due) are excluded entirely.
    */
   private getMieteingaenge(propertyFilter: { ids: string[]; clause: string; params: string[] }, yearStart: string, yearEnd: string) {
     if (propertyFilter.ids.length === 0) {
@@ -105,32 +106,29 @@ export class DashboardService {
 
     const today = new Date().toISOString().split('T')[0];
 
-    // Only count receivables as "offen" if they are due today or in the past
-    const openResult = this.db
+    // Get receivables due up to today: sum paid_amount as "bezahlt", sum remaining as "offen"
+    const result = this.db
       .prepare(
-        `SELECT COUNT(*) as count, COALESCE(SUM(total_amount), 0) as sum
+        `SELECT 
+           COALESCE(SUM(paid_amount), 0) as bezahlt_summe,
+           COUNT(CASE WHEN status = 'bezahlt' THEN 1 END) as bezahlt_anzahl,
+           COALESCE(SUM(CASE WHEN status != 'bezahlt' THEN total_amount - paid_amount ELSE 0 END), 0) as offen_summe,
+           COUNT(CASE WHEN status IN ('offen', 'teilbezahlt', 'überfällig') THEN 1 END) as offen_anzahl
          FROM receivables
          WHERE property_id ${propertyFilter.clause}
            AND due_date >= ? AND due_date <= ?
-           AND status IN ('offen', 'teilbezahlt', 'überfällig')`
+           AND status != 'storniert'`
       )
-      .get(...propertyFilter.params, yearStart, today) as { count: number; sum: number };
-
-    const paidResult = this.db
-      .prepare(
-        `SELECT COUNT(*) as count, COALESCE(SUM(total_amount), 0) as sum
-         FROM receivables
-         WHERE property_id ${propertyFilter.clause}
-           AND due_date >= ? AND due_date <= ?
-           AND status = 'bezahlt'`
-      )
-      .get(...propertyFilter.params, yearStart, yearEnd) as { count: number; sum: number };
+      .get(...propertyFilter.params, yearStart, today) as { 
+        bezahlt_summe: number; bezahlt_anzahl: number; 
+        offen_summe: number; offen_anzahl: number 
+      };
 
     return {
-      offen_anzahl: openResult.count,
-      offen_summe: openResult.sum,
-      bezahlt_anzahl: paidResult.count,
-      bezahlt_summe: paidResult.sum,
+      offen_anzahl: result.offen_anzahl,
+      offen_summe: result.offen_summe,
+      bezahlt_anzahl: result.bezahlt_anzahl,
+      bezahlt_summe: result.bezahlt_summe,
     };
   }
 
