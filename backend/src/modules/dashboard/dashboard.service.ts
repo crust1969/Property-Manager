@@ -95,12 +95,17 @@ export class DashboardService {
 
   /**
    * Mieteingänge: count and sum of open vs paid receivables for current year.
+   * Only receivables with due_date <= today are counted as "offen" —
+   * future receivables (not yet due) are excluded from the open count.
    */
   private getMieteingaenge(propertyFilter: { ids: string[]; clause: string; params: string[] }, yearStart: string, yearEnd: string) {
     if (propertyFilter.ids.length === 0) {
       return { offen_anzahl: 0, offen_summe: 0, bezahlt_anzahl: 0, bezahlt_summe: 0 };
     }
 
+    const today = new Date().toISOString().split('T')[0];
+
+    // Only count receivables as "offen" if they are due today or in the past
     const openResult = this.db
       .prepare(
         `SELECT COUNT(*) as count, COALESCE(SUM(total_amount), 0) as sum
@@ -109,7 +114,7 @@ export class DashboardService {
            AND due_date >= ? AND due_date <= ?
            AND status IN ('offen', 'teilbezahlt', 'überfällig')`
       )
-      .get(...propertyFilter.params, yearStart, yearEnd) as { count: number; sum: number };
+      .get(...propertyFilter.params, yearStart, today) as { count: number; sum: number };
 
     const paidResult = this.db
       .prepare(
