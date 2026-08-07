@@ -1,8 +1,9 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { t } from '../../i18n/de';
 import { Button, Card, Input } from '../../shared/components';
 import { formatCurrency, formatNumber } from '../../shared/utils/formatting';
+import { useAutoSelectProperty } from '../../shared/hooks';
 import { fetchProperties } from '../properties/api';
 import { createLoan, updateLoan, fetchLoan } from './api';
 import type { LoanFormData, ValidationErrors } from './types';
@@ -34,6 +35,12 @@ export function LoanForm({ mode }: LoanFormProps) {
   const [loadingData, setLoadingData] = useState(mode === 'edit');
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [properties, setProperties] = useState<Property[]>([]);
+
+  const setPropertyId = useCallback((propId: string) => {
+    setFormData(prev => ({ ...prev, property_id: propId }));
+  }, []);
+
+  useAutoSelectProperty(properties, formData.property_id, setPropertyId);
 
   useEffect(() => {
     loadProperties();

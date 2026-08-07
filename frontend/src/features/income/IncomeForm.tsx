@@ -1,8 +1,9 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { t } from '../../i18n/de';
 import { Button, Card, Input } from '../../shared/components';
 import { formatCurrency } from '../../shared/utils/formatting';
+import { useAutoSelectProperty } from '../../shared/hooks';
 import { fetchCategories } from '../categories/api';
 import { fetchProperties } from '../properties/api';
 import { createIncome, updateIncome, fetchIncomeById } from './api';
@@ -42,6 +43,12 @@ export function IncomeForm({ mode }: IncomeFormProps) {
       loadIncomeData(id);
     }
   }, [mode, id]);
+
+  const setPropertyId = useCallback((propId: string) => {
+    setFormData(prev => ({ ...prev, property_id: propId }));
+  }, []);
+
+  useAutoSelectProperty(properties, formData.property_id, setPropertyId);
 
   useEffect(() => {
     if (formData.property_id) {

@@ -1,8 +1,9 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { t } from '../../i18n/de';
 import { Button, Card, Input } from '../../shared/components';
 import { formatCurrency } from '../../shared/utils/formatting';
+import { useAutoSelectProperty } from '../../shared/hooks';
 import { fetchCategories } from '../categories/api';
 import { fetchProperties } from '../properties/api';
 import { createExpense, updateExpense, fetchExpense, createSplit, updateSplit } from './api';
@@ -43,6 +44,12 @@ export function ExpenseForm({ mode }: ExpenseFormProps) {
   const [categories, setCategories] = useState<Category[]>([]);
   const [properties, setProperties] = useState<Property[]>([]);
   const [uploadedDocIds, setUploadedDocIds] = useState<string[]>([]);
+
+  const setPropertyId = useCallback((id: string) => {
+    setFormData(prev => ({ ...prev, property_id: id }));
+  }, []);
+
+  useAutoSelectProperty(properties, formData.property_id, setPropertyId);
 
   useEffect(() => {
     loadReferenceData();

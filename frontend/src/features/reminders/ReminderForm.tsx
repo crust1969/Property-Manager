@@ -1,7 +1,8 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { t } from '../../i18n/de';
 import { Button, Card, Input } from '../../shared/components';
+import { useAutoSelectProperty } from '../../shared/hooks';
 import { createReminder, updateReminder, fetchReminders } from './api';
 import { fetchProperties } from '../properties/api';
 import type { ReminderFormData, ValidationErrors, Reminder } from './types';
@@ -30,6 +31,12 @@ export function ReminderForm({ mode }: ReminderFormProps) {
   const [properties, setProperties] = useState<Property[]>([]);
   const [loading, setLoading] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
+
+  const setPropertyId = useCallback((propId: string) => {
+    setFormData(prev => ({ ...prev, property_id: propId }));
+  }, []);
+
+  useAutoSelectProperty(properties, formData.property_id, setPropertyId);
 
   useEffect(() => {
     loadProperties();

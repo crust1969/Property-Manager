@@ -31,6 +31,10 @@ export function usePropertyFilter(): UsePropertyFilterResult {
         const props = await fetchProperties();
         if (!cancelled) {
           setProperties(props);
+          // Auto-select if only one property exists
+          if (props.length === 1) {
+            setSelectedPropertyId(props[0].id);
+          }
         }
       } catch {
         // Non-critical: filter won't work but page still loads

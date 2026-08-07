@@ -1,8 +1,9 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { t } from '../../i18n/de';
 import { Button, Card, Input } from '../../shared/components';
 import { formatCurrency } from '../../shared/utils/formatting';
+import { useAutoSelectProperty } from '../../shared/hooks';
 import { createLease, updateLease, fetchLease } from './api';
 import { fetchProperties } from '../properties/api';
 import { fetchTenants } from '../tenants/api';
@@ -70,6 +71,12 @@ export function LeaseForm({ mode }: LeaseFormProps) {
   const [loading, setLoading] = useState(false);
   const [loadingData, setLoadingData] = useState(mode === 'edit');
   const [submitError, setSubmitError] = useState<string | null>(null);
+
+  const setPropertyId = useCallback((propId: string) => {
+    setFormData(prev => ({ ...prev, property_id: propId }));
+  }, []);
+
+  useAutoSelectProperty(properties, formData.property_id, setPropertyId);
 
   useEffect(() => {
     loadReferenceData();
