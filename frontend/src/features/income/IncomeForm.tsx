@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import { t } from '../../i18n/de';
 import { Button, Card, Input } from '../../shared/components';
 import { formatCurrency } from '../../shared/utils/formatting';
@@ -27,11 +27,13 @@ interface IncomeFormProps {
 
 export function IncomeForm({ mode }: IncomeFormProps) {
   const navigate = useNavigate();
+  const location = useLocation();
   const { id } = useParams<{ id: string }>();
+  const copyFromId = (location.state as { copyFromId?: string } | null)?.copyFromId;
   const [formData, setFormData] = useState<IncomeFormData>(INITIAL_FORM);
   const [errors, setErrors] = useState<ValidationErrors>({});
   const [loading, setLoading] = useState(false);
-  const [loadingData, setLoadingData] = useState(mode === 'edit');
+  const [loadingData, setLoadingData] = useState(mode === 'edit' || (mode === 'create' && !!copyFromId));
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [categories, setCategories] = useState<Category[]>([]);
   const [properties, setProperties] = useState<Property[]>([]);
@@ -41,8 +43,10 @@ export function IncomeForm({ mode }: IncomeFormProps) {
     loadReferenceData();
     if (mode === 'edit' && id) {
       loadIncomeData(id);
+    } else if (mode === 'create' && copyFromId) {
+      loadIncomeData(copyFromId, true);
     }
-  }, [mode, id]);
+  }, [mode, id, copyFromId]);
 
   const setPropertyId = useCallback((propId: string) => {
     setFormData(prev => ({ ...prev, property_id: propId }));
@@ -90,7 +94,7 @@ export function IncomeForm({ mode }: IncomeFormProps) {
     }
   }
 
-  async function loadIncomeData(incomeId: string) {
+  async function loadIncomeData(incomeId: string, isCopy = false) {
     setLoadingData(true);
     try {
       const income = await fetchIncomeById(incomeId);
@@ -101,7 +105,9 @@ export function IncomeForm({ mode }: IncomeFormProps) {
         category_id: income.category_id,
         description: income.description || '',
         property_id: income.property_id,
-        receivable_id: income.receivable_id || '',
+        // A Sollstellung link is specific to one booking and must not be
+        // carried over to a copy, so it stays empty when duplicating.
+        receivable_id: isCopy ? '' : (income.receivable_id || ''),
       });
     } catch (err) {
       setSubmitError(err instanceof Error ? err.message : 'Fehler beim Laden');
@@ -174,7 +180,11 @@ export function IncomeForm({ mode }: IncomeFormProps) {
     );
   }
 
-  const title = mode === 'create' ? t.einnahmen.neuAnlegen : 'Einnahme bearbeiten';
+  const title = mode === 'edit'
+    ? 'Einnahme bearbeiten'
+    : copyFromId
+      ? 'Einnahme kopieren'
+      : t.einnahmen.neuAnlegen;
 
   return (
     <div className="p-6 max-w-3xl">

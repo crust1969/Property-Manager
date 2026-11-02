@@ -117,7 +117,7 @@ export function IncomeListPage() {
     {
       key: 'actions',
       header: t.common.aktionen,
-      className: 'w-40',
+      className: 'w-56',
       render: (i) => (
         <div className="flex gap-2">
           <Button
@@ -129,6 +129,16 @@ export function IncomeListPage() {
             }}
           >
             {t.common.bearbeiten}
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={(ev) => {
+              ev.stopPropagation();
+              navigate('/einnahmen/neu', { state: { copyFromId: i.id } });
+            }}
+          >
+            {t.common.kopieren}
           </Button>
           <Button
             variant="danger"
