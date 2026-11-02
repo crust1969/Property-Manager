@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import { t } from '../../i18n/de';
 import { Button, Card, Input } from '../../shared/components';
 import { formatCurrency } from '../../shared/utils/formatting';
@@ -34,12 +34,14 @@ interface ExpenseFormProps {
 
 export function ExpenseForm({ mode }: ExpenseFormProps) {
   const navigate = useNavigate();
+  const location = useLocation();
   const { id } = useParams<{ id: string }>();
+  const copyFromId = (location.state as { copyFromId?: string } | null)?.copyFromId;
   const [formData, setFormData] = useState<ExpenseFormData>(INITIAL_FORM);
   const [splits, setSplits] = useState<SplitRow[]>(INITIAL_SPLIT);
   const [errors, setErrors] = useState<ValidationErrors>({});
   const [loading, setLoading] = useState(false);
-  const [loadingData, setLoadingData] = useState(mode === 'edit');
+  const [loadingData, setLoadingData] = useState(mode === 'edit' || (mode === 'create' && !!copyFromId));
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [categories, setCategories] = useState<Category[]>([]);
   const [properties, setProperties] = useState<Property[]>([]);
@@ -55,8 +57,10 @@ export function ExpenseForm({ mode }: ExpenseFormProps) {
     loadReferenceData();
     if (mode === 'edit' && id) {
       loadExpenseData(id);
+    } else if (mode === 'create' && copyFromId) {
+      loadExpenseData(copyFromId);
     }
-  }, [mode, id]);
+  }, [mode, id, copyFromId]);
 
   async function loadReferenceData() {
     try {
@@ -189,7 +193,11 @@ export function ExpenseForm({ mode }: ExpenseFormProps) {
     );
   }
 
-  const title = mode === 'create' ? t.ausgaben.neuAnlegen : 'Ausgabe bearbeiten';
+  const title = mode === 'edit'
+    ? 'Ausgabe bearbeiten'
+    : copyFromId
+      ? 'Ausgabe kopieren'
+      : t.ausgaben.neuAnlegen;
 
   return (
     <div className="p-6 max-w-3xl">

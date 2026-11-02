@@ -147,7 +147,7 @@ export function ExpenseListPage() {
     {
       key: 'actions',
       header: t.common.aktionen,
-      className: 'w-40',
+      className: 'w-56',
       render: (e) => (
         <div className="flex gap-2">
           <Button
@@ -159,6 +159,16 @@ export function ExpenseListPage() {
             }}
           >
             {t.common.bearbeiten}
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={(ev) => {
+              ev.stopPropagation();
+              navigate('/ausgaben/neu', { state: { copyFromId: e.id } });
+            }}
+          >
+            {t.common.kopieren}
           </Button>
           <Button
             variant="danger"
