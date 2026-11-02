@@ -22,6 +22,7 @@ export const t = {
     abbrechen: 'Abbrechen',
     bearbeiten: 'Bearbeiten',
     loeschen: 'Löschen',
+    kopieren: 'Kopieren',
     anlegen: 'Anlegen',
     suchen: 'Suchen',
     filtern: 'Filtern',
